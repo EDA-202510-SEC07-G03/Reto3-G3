@@ -1,12 +1,17 @@
 import sys
-
+import os
+from tabulate import tabulate
+import App.logic as log
+data_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'Data')
+default_name = os.path.join(data_dir, 'Crime_in_LA_100.csv')
 
 def new_logic():
     """
         Se crea una instancia del controlador
     """
     #TODO: Llamar la función de la lógica donde se crean las estructuras de datos
-    pass
+    catalog = log.new_logic()
+    return catalog
 
 def print_menu():
     print("Bienvenido")
@@ -26,7 +31,33 @@ def load_data(control):
     Carga los datos
     """
     #TODO: Realizar la carga de datos
-    pass
+    size = log.load_data(control)
+    first = log.primeros(control)
+    last = log.ultimos(control)
+    line_name={
+        "DR_NO": "ID Reporte",
+        "Date Rptd": "Fecha Reportado",
+        "DATE OCC": "Fecha Ocurrencia",
+        "AREA NAME": "Área",
+        "Crm Cd": "Código Crimen"
+    }
+    print("Numero de registros: ", size)
+    print("Primeros 5 registros cargados: ")
+    print("...")
+    print(tabulate(first["elements"],
+                   headers= line_name,
+                   tablefmt="grid",
+                   stralign="center"))
+    print("...")
+    print("Ultimos 5 registros cargados: ")
+    print(tabulate(last["elements"],
+                   headers= line_name,
+                   tablefmt="grid",
+                   stralign="center"))
+    print("...")
+    return control
+
+    
 
 
 def print_data(control, id):
