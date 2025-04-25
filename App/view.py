@@ -16,8 +16,8 @@ def new_logic():
 def print_menu():
     print("Bienvenido")
     print("1- Cargar información")
-    print("2- Ejecutar Requerimiento 1")
-    print("3- Ejecutar Requerimiento 2")
+    print("2- Carga de informacion en estructuras auxiliares")
+    print("3- Ejecutar Requerimiento 1")
     print("4- Ejecutar Requerimiento 3")
     print("5- Ejecutar Requerimiento 4")
     print("6- Ejecutar Requerimiento 5")
@@ -50,6 +50,7 @@ def load_data(control):
                    stralign="center"))
     print("...")
     print("Ultimos 5 registros cargados: ")
+    print("...")
     print(tabulate(last["elements"],
                    headers= line_name,
                    tablefmt="grid",
@@ -58,6 +59,14 @@ def load_data(control):
     return control
 
     
+def auxiliary_data(control):
+    """
+        Carga los datos en estructuras auxiliares
+    """
+    #log.create_tree(control)
+    map = log.create_map(control)
+    print("Estructuras auxiliares cargadas")
+    print("...")
 
 
 def print_data(control, id):
@@ -72,8 +81,29 @@ def print_req_1(control):
         Función que imprime la solución del Requerimiento 1 en consola
     """
     # TODO: Imprimir el resultado del requerimiento 1
-    pass
-
+    anno0 = input("Ingrese la fecha inicial: ")
+    anno1 = input("Ingrese la fecha final: ")
+    data = log.req_1(control, anno0, anno1)
+    line_name={
+        "DR_NO": "ID Reporte",
+        "DATE OCC": "Fecha Ocurrencia",
+        "TIME OCC": "Hora Ocurrencia",
+        "AREA NAME": "Área",
+        "Crm Cd": "Código Crimen",
+        "Crm Cd Desc": "Descripción Crimen",
+        "LOCATION": "Ubicación",
+    }
+    print("Un total de ", data[1], "registros pasaron el filtro.")
+    print("...")
+    print("Listado de registros: ")
+    print("...")
+    print(tabulate(data[0]["elements"],
+                   headers= line_name,
+                   tablefmt="grid",
+                   stralign="center"))
+    print("...")
+    print("La accion Tomo ", data[2], "ms")
+    
 
 def print_req_2(control):
     """
@@ -104,7 +134,26 @@ def print_req_5(control):
         Función que imprime la solución del Requerimiento 5 en consola
     """
     # TODO: Imprimir el resultado del requerimiento 5
-    pass
+    anno0 = input("Ingrese la fecha inicial: ")
+    anno1 = input("Ingrese la fecha final: ")
+    n = input("Ingrese cuantas areas desea ver: ")
+    data = log.req_5(control, n, anno0, anno1)   
+    line_name={
+        "AREA NAME": "Área",
+        "AREA": "Codigo Área",
+        "Crimes": "Cantidad de Crímenes",
+        "First": "Primer Crimen",
+        "Last": "Ultimo Crimen",
+    }
+    print("Listado de registros: ")
+    print("...")
+    print(tabulate(data[0]["elements"],
+                   headers= line_name,
+                   tablefmt="grid",
+                   stralign="center"))
+    print("...")
+    print("La accion Tomo ", data[1], "ms")
+    
 
 
 def print_req_6(control):
@@ -147,11 +196,13 @@ def main():
         if int(inputs) == 1:
             print("Cargando información de los archivos ....\n")
             data = load_data(control)
+            
         elif int(inputs) == 2:
-            print_req_1(control)
-
+            print("...")
+            auxiliary_data(control)
+            
         elif int(inputs) == 3:
-            print_req_2(control)
+            print_req_1(control)
 
         elif int(inputs) == 4:
             print_req_3(control)
