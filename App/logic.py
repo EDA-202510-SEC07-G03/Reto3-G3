@@ -30,7 +30,7 @@ def new_logic():
 
 
 
-def load_data(catalog, filename=(data_dir+"Crime_in_LA_20.csv")):
+def load_data(catalog, filename=(data_dir+"Crime_in_LA_100.csv")):
     """
     Carga los datos del reto
     """
@@ -67,7 +67,7 @@ def load_data(catalog, filename=(data_dir+"Crime_in_LA_20.csv")):
 
 def create_tree(catalog):
     """
-    Crea el árbol binario de búsqueda para las fechas
+    Crea el árbol para las fechas
     """
     for i in range(catalog["crimes"]["size"]):
         crime = catalog["crimes"]["elements"][i]
@@ -84,10 +84,10 @@ def create_map(catalog):
             mp.put(catalog["area_map"], i, area_list)
         else:
             area_list = mp.get(catalog["area_map"], i)
-        for j in range(catalog["crimes"]["size"]):  # Iterar por los crímenes
+        for j in range(catalog["crimes"]["size"]):  
             crime = catalog["crimes"]["elements"][j]
             if crime["AREA"] is not "Unknown":
-                if int(crime["AREA"]) == i:  # Verificar si el crimen pertenece al área actual
+                if int(crime["AREA"]) == i: 
                     al.add_last(area_list, crime)
 
     return catalog["area_map"]
@@ -157,8 +157,8 @@ def req_1(catalog, anno_0, anno_1):
         return None
     filtro = bst.keys(catalog["date_tree"], year0, year1) 
     lista_retorno = al.new_list()
-    current_node = filtro["first"]
     sl.merge_sort(filtro, True)
+    current_node = filtro["first"]
     while current_node is not None:
         for j in range(catalog["crimes"]["size"]):
             value = current_node["info"]
@@ -203,47 +203,57 @@ def req_4(catalog):
     pass
 
 def sort_unresolved(unresolved):
-    """
-    Ordena la lista de crímenes no resueltos por 'Date Rptd' usando una lista auxiliar.
-    """
-    # Crear una lista auxiliar con las fechas de reporte
+
     date_list = al.new_list()
     for i in range(unresolved["size"]):
         al.add_last(date_list, unresolved["elements"][i]["Date Rptd"])
-
-    # Ordenar la lista auxiliar y reorganizar 'unresolved' en el mismo orden
-    al.selection_sort(date_list, lambda d1, d2: d1 < d2)
-
-    # Reorganizar 'unresolved' según el orden de 'date_list'
+    al.selection_sort(date_list, lambda u1, u2: u1 < u2)
     sorted_unresolved = al.new_list()
     for date in date_list["elements"]:
+        added = False  
         for crime in unresolved["elements"]:
-            if crime["Date Rptd"] == date:
+            if not added and crime["Date Rptd"] == date:
                 al.add_last(sorted_unresolved, crime)
-                break
-
+                added = True 
     return sorted_unresolved
 
 def sort_stats(stats):
-    """
-    Ordena la lista de estadísticas por 'Crimes' (descendente) y 'AREA NAME' (ascendente).
-    """
-    # Crear una lista auxiliar con los valores de 'Crimes' y 'AREA NAME'
+    
     crimes_list = al.new_list()
     for i in range(stats["size"]):
         al.add_last(crimes_list, (stats["elements"][i]["Crimes"], stats["elements"][i]["AREA NAME"]))
-
-    # Ordenar la lista auxiliar
-    al.selection_sort(crimes_list, lambda c1, c2: c1[0] > c2[0] or (c1[0] == c2[0] and c1[1] < c2[1]))
-
-    # Reorganizar 'stats' según el orden de 'crimes_list'
+    al.selection_sort(crimes_list, lambda c1, c2: 
+        (c1[0] > c2[0]) or (c1[0] == c2[0] and c1[1] < c2[1]))
     sorted_stats = al.new_list()
+    processed = al.new_list() 
     for crimes, area_name in crimes_list["elements"]:
+        already_added = False
         for stat in stats["elements"]:
-            if stat["Crimes"] == crimes and stat["AREA NAME"] == area_name:
+            for processed_stat in processed["elements"]:
+                if processed_stat == stat:
+                    already_added = True
+            if not already_added and stat["Crimes"] == crimes and stat["AREA NAME"] == area_name:
                 al.add_last(sorted_stats, stat)
-                break
+                al.add_last(processed, stat)  
+                already_added = True  
+    return sorted_stats
 
+def extended_sort_stats(stats):
+    
+    data_list = al.new_list()
+    for i in range(stats["size"]):
+        stat = stats["elements"][i]
+        crimes = stat["Crimes"]
+        tuples = al.size(stat["Tuples"])
+        area_name = stat["AREA NAME"]
+        al.add_last(data_list, (crimes, tuples, area_name, i))
+    al.selection_sort(data_list, lambda c1, c2: (c1[0] > c2[0]) or 
+        (c1[0] == c2[0] and c1[1] > c2[1]) or 
+        (c1[0] == c2[0] and c1[1] == c2[1] and c1[2] < c2[2])
+    )
+    sorted_stats = al.new_list()
+    for _, _, _, index in data_list["elements"]:
+        al.add_last(sorted_stats, stats["elements"][index])
     return sorted_stats
 
 def req_5(catalog, n, anno_0, anno_1):
@@ -259,8 +269,6 @@ def req_5(catalog, n, anno_0, anno_1):
         return None
     areas = catalog["area_map"]
     stats = al.new_list()
-    
-    #for code in mp.key_set(areas):
     n = int(n)
     for code in range(1, 21):  
         crimes = mp.get(areas, code)
@@ -297,31 +305,46 @@ def req_6(catalog, n, sex, mes):
     Retorna el resultado del requerimiento 6
     """
     # TODO: Modificar el requerimiento 6
-    month = datetime.strptime(mes, "%m")
+    start_time = get_time()
+    mes = datetime.strptime(mes, "%m")
     areas = catalog["area_map"]
     stats = al.new_list()
+    n = int(n)
     for code in range(1, 21):
         crimes = mp.get(areas, code)
+        counts = {}
+        numb = al.new_list()
         for i in range(crimes["size"]):
             crime = crimes["elements"][i]
-            numb = al.new_list()
-            if crime["DATE OCC"] == month and crime["Vict Sex"] == sex:
-                al.add_last(numb, crime)
+            if crime["Vict Sex"] == sex:
+                year = crime["Date Rptd"].year
+                if year not in counts:
+                    counts[year] = 0
+                counts[year] += 1
+                if crime["Date Rptd"].month == mes.month:
+                    al.add_last(numb, crime)
+
         if numb["size"] > 0:
-            numb = sort_unresolved(numb)
+            tuplas = al.new_list()
+            for year, count in counts.items():
+                al.add_last(tuplas, (count, year))
             info = {
                 "AREA NAME": numb["elements"][0]["AREA NAME"],
                 "AREA": code,
                 "Crimes": numb["size"],
+                "Tuples": tuplas,
             }
             if info not in stats["elements"]:
                 al.add_last(stats, info)
-    stats = sort_stats(stats)   
-    if stats["size"] > int(n):
+    stats = extended_sort_stats(stats)   
+    if stats["size"] > n:
         new_stats = al.new_list()
-        al.add_last(new_stats, stats["elements"][i])
+        for i in range(0, n):
+            al.add_last(new_stats, stats["elements"][i])
         stats = new_stats
-    return stats
+    end_time = get_time()
+    elapsed_time = delta_time(start_time, end_time)   
+    return stats, elapsed_time
                 
         
     

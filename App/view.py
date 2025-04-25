@@ -63,8 +63,8 @@ def auxiliary_data(control):
     """
         Carga los datos en estructuras auxiliares
     """
-    #log.create_tree(control)
-    map = log.create_map(control)
+    log.create_tree(control)
+    log.create_map(control)
     print("Estructuras auxiliares cargadas")
     print("...")
 
@@ -161,7 +161,24 @@ def print_req_6(control):
         Función que imprime la solución del Requerimiento 6 en consola
     """
     # TODO: Imprimir el resultado del requerimiento 6
-    pass
+    mes = input("Ingrese el mes: ")
+    sex = input("Ingrese el sexo: ")
+    n = input("Ingrese cuantas areas desea ver: ")
+    data = log.req_6(control, n, sex, mes)
+    line_name={
+        "AREA NAME": "Área",
+        "AREA": "Codigo Área",
+        "Crimes": "Crimenes en el mes dado",
+        "Tuples": "Tuplas de crimenes" 
+    }
+    print("Listado de registros: ")
+    print("...")
+    print(tabulate(data[0]["elements"],
+                   headers= line_name,
+                   tablefmt="grid",
+                   stralign="center"))
+    print("...")
+    print("La accion Tomo ", data[1], "ms")
 
 
 def print_req_7(control):
