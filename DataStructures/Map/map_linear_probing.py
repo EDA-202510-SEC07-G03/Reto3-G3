@@ -65,12 +65,10 @@ def is_available(table, pos):
    return False
 
 def default_compare(key, entry):
-
-   if key == ent.get_key(entry):
-      return 0
-   elif key > ent.get_key(entry):
-      return 1
-   return -1
+    if key == ent.get_key(entry):
+        return 0
+    else:
+        return -1
 
 def find_slot(my_map, key, hash_value):
    first_avail = None
@@ -91,24 +89,30 @@ def find_slot(my_map, key, hash_value):
    return ocupied, first_avail
 
 def get(my_map, key):
-    hash = map.hash_value(my_map,key)
-    element = ent.get_value(my_map["table"]["elements"][hash])
-    return element
+    hash_value = map.hash_value(my_map, key)
+    ocupied, slot = find_slot(my_map, key, hash_value)
+    if ocupied:
+        entry = al.get_element(my_map["table"], slot)
+        return ent.get_value(entry)
+    else:
+        return None
 
 def contains(my_map, key):
-    hash = map.get_hash(my_map,key)
-    if my_map["table"]["elements"][hash]["key"] == key:
-        return True
-    return False
+    hash_value = map.hash_value(my_map, key)
+    ocupied, slot = find_slot(my_map, key, hash_value)
+    return ocupied
 
 def size(my_map):
     return my_map["size"]
 
-def remove(my_map,key):
-    hash = map.hash_value(my_map,key)
-    my_map["table"]["elements"][hash]["value"] = None
-    my_map["table"]["elements"][hash]["key"] = None
-    my_map["size"] -= 1
+def remove(my_map, key):
+    hash_value = map.hash_value(my_map, key)
+    ocupied, slot = find_slot(my_map, key, hash_value)
+    if ocupied:
+        entry = al.get_element(my_map["table"], slot)
+        ent.set_key(entry, "__EMPTY__")
+        ent.set_value(entry, None)
+        my_map["size"] -= 1
     return my_map
 
 def is_empty(my_map):

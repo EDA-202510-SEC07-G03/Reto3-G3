@@ -31,7 +31,7 @@ def load_data(control):
     Carga los datos
     """
     #TODO: Realizar la carga de datos
-    size = log.load_data(control)
+    size, time = log.load_data(control)
     first = log.primeros(control)
     last = log.ultimos(control)
     line_name={
@@ -42,6 +42,7 @@ def load_data(control):
         "Crm Cd": "Código Crimen"
     }
     print("Numero de registros: ", size)
+    print("Tiempo en ejecutar: ", time)
     print("Primeros 5 registros cargados: ")
     print("...")
     print(tabulate(first["elements"],
@@ -64,7 +65,8 @@ def auxiliary_data(control):
         Carga los datos en estructuras auxiliares
     """
     log.create_tree(control)
-    log.create_map(control)
+    log.create_area_map(control)
+    log.create_area_name_map(control)
     print("Estructuras auxiliares cargadas")
     print("...")
 
@@ -118,7 +120,38 @@ def print_req_3(control):
         Función que imprime la solución del Requerimiento 3 en consola
     """
     # TODO: Imprimir el resultado del requerimiento 3
-    pass
+    area_name = input("Ingrese el nombre del área: ")
+    N = int(input("Ingrese el número de crímenes más recientes que desea ver: "))
+
+    data = log.req_3(control, N, area_name)
+
+    if data is None:
+        print("No se encontraron crímenes para el área especificada.")
+        return
+
+    recent_crimes, total_crimes, elapsed_time = data
+
+    line_name = {
+        "DR_NO": "ID Reporte",
+        "DATE OCC": "Fecha Ocurrencia",
+        "TIME OCC": "Hora Ocurrencia",
+        "AREA NAME": "Área",
+        "Rpt Dist No": "Distrito Reporte",
+        "Part 1-2": "Parte 1-2",
+        "Crm Cd": "Código Crimen",
+        "Status": "Estado",
+        "LOCATION": "Ubicación"
+    }
+
+    print(f"\nUn total de {total_crimes} crímenes fueron encontrados en el área '{area_name}'.")
+    print(f"\nListado de los {len(recent_crimes['elements'])} crímenes más recientes:\n")
+    print("...")
+    print(tabulate(recent_crimes["elements"],
+                   headers=line_name,
+                   tablefmt="grid",
+                   stralign="center"))
+    print("...")
+    print(f"La acción tomó {elapsed_time} ms")
 
 
 def print_req_4(control):
@@ -185,8 +218,46 @@ def print_req_7(control):
     """
         Función que imprime la solución del Requerimiento 7 en consola
     """
-    # TODO: Imprimir el resultado del requerimiento 7
-    pass
+    # Solicitar parámetros al usuario
+    N = int(input("Ingrese el número de crímenes más comunes a mostrar: "))
+    sex = input("Ingrese el sexo de la víctima (M/F): ")
+    age_min = int(input("Ingrese la edad mínima del rango: "))
+    age_max = int(input("Ingrese la edad máxima del rango: "))
+
+    # Ejecutar la lógica
+    result = log.req_7(control, N, sex, age_min, age_max)
+    if result is None:
+        print(f"No se encontraron crímenes para sexo '{sex}' en rango {age_min}-{age_max}.")
+        return
+
+    stats_list, elapsed_time = result
+
+    # Preparar cabeceras para tabulate
+    headers = {
+        "Crm Cd": "Código Crimen",
+        "Total": "Total Crímenes",
+        "By Age": "Crímenes por Edad",
+        "By Year": "Crímenes por Año"
+    }
+
+    # Formatear cada entrada para presentación
+    display_rows = []
+    for stat in stats_list["elements"]:
+        # Convertir listas de tuplas a cadena legible
+        by_age_str = "; ".join(f"{count}@{age}" for count, age in stat["By Age"])
+        by_year_str = "; ".join(f"{count}@{year}" for count, year in stat["By Year"])
+
+        display_rows.append({
+            "Crm Cd": stat["Crm Cd"],
+            "Total": stat["Total"],
+            "By Age": by_age_str,
+            "By Year": by_year_str
+        })
+
+    # Imprimir tabla
+    print(f"\nTop {len(display_rows)} crímenes más comunes para sexo '{sex}' y edades {age_min}-{age_max}:")
+    print(tabulate(display_rows, headers=headers, tablefmt="grid", stralign="center"))
+    print(f"\nLa acción tomó {elapsed_time} ms")
 
 
 def print_req_8(control):

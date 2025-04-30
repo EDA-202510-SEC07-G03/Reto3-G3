@@ -214,36 +214,45 @@ def quick_sort(my_list, sort_criteria, low=0, high=None):
             return k
 
 
-def merge(left, right, sort_criteria):
+def merge(left, right, sort_criteria, cmp_function=None):
     sorted_list = new_list()
     i = j = 0
-    if sort_criteria == True:
-        while i < size(left) and j < size(right):
-            if left["elements"][i] <= right["elements"][j]:
-                add_last(sorted_list, left["elements"][i])
-                i += 1
-            else:
-                add_last(sorted_list, right["elements"][j])
-                j += 1
-        return sorted_list
-    else:
-        while i < size(left) and j < size(right):
-            if left["elements"][i] >= right["elements"][j]:
-                add_last(sorted_list, left["elements"][i])
-                i += 1
-            else:
-                add_last(sorted_list, right["elements"][j])
-                j += 1
-        return sorted_list       
+    while i < size(left) and j < size(right):
+        left_elem = left["elements"][i]
+        right_elem = right["elements"][j]
 
-def merge_sort(my_list, sort_criteria):
+        if cmp_function:
+            comp_result = cmp_function(left_elem, right_elem)
+        else:
+            # sort_criteria True: ascendente, False: descendente
+            if sort_criteria:
+                comp_result = -1 if left_elem <= right_elem else 1
+            else:
+                comp_result = -1 if left_elem >= right_elem else 1
+
+        if comp_result <= 0:
+            add_last(sorted_list, left_elem)
+            i += 1
+        else:
+            add_last(sorted_list, right_elem)
+            j += 1
+
+    while i < size(left):
+        add_last(sorted_list, left["elements"][i])
+        i += 1
+    while j < size(right):
+        add_last(sorted_list, right["elements"][j])
+        j += 1
+    return sorted_list
+
+
+def merge_sort(my_list, sort_criteria=True, cmp_function=None):
     if size(my_list) <= 1:
         return my_list
     mid = size(my_list) // 2
-    l_half = merge_sort(sub_list(my_list, 0, mid), sort_criteria)
-    r_half = merge_sort(sub_list(my_list, mid, size(my_list) - mid), sort_criteria)
-    return merge(l_half, r_half,sort_criteria)
-    
+    l_half = merge_sort(sub_list(my_list, 0, mid), sort_criteria, cmp_function)
+    r_half = merge_sort(sub_list(my_list, mid, size(my_list) - mid), sort_criteria, cmp_function)
+    return merge(l_half, r_half, sort_criteria, cmp_function)
          
     
     
