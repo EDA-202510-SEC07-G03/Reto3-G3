@@ -106,14 +106,15 @@ def exchange(my_list, pos_1, pos_2):
         return "IndexError: list index out of range"
     
 def sub_list(my_list, pos_i, num_elements):
-    if 0<=pos_i<=my_list["size"]:
-        sub_list = new_list()
-        sub_list["size"] = num_elements
-        for i in range(pos_i, pos_i+num_elements):
-            sub_list["elements"].append(my_list["elements"][i])
-        return sub_list
+    sublist = new_list()
+    if 0 <= pos_i < my_list["size"]:
+        final_index = min(pos_i + num_elements, my_list["size"]) 
+        for i in range(pos_i, final_index):
+            sublist["elements"].append(my_list["elements"][i])
+        sublist["size"] = len(sublist["elements"])
+        return sublist
     else:
-        return "IndexError: list index out of range"
+        return new_list()
     
 def default_sort_criteria(element_1, element_2):
 
@@ -214,21 +215,20 @@ def quick_sort(my_list, sort_criteria, low=0, high=None):
             return k
 
 
-def merge(left, right, sort_criteria, cmp_function=None):
+def merge(left, right, sort_criteria=True, cmp_function=None):
     sorted_list = new_list()
     i = j = 0
     while i < size(left) and j < size(right):
         left_elem = left["elements"][i]
         right_elem = right["elements"][j]
 
-        if cmp_function:
+        if cmp_function is not None:
             comp_result = cmp_function(left_elem, right_elem)
         else:
-            # sort_criteria True: ascendente, False: descendente
-            if sort_criteria:
-                comp_result = -1 if left_elem <= right_elem else 1
-            else:
-                comp_result = -1 if left_elem >= right_elem else 1
+            if sort_criteria:  # Ascendente
+                comp_result = -1 if left_elem < right_elem else 1
+            else:  # Descendente
+                comp_result = -1 if left_elem > right_elem else 1
 
         if comp_result <= 0:
             add_last(sorted_list, left_elem)
@@ -243,6 +243,7 @@ def merge(left, right, sort_criteria, cmp_function=None):
     while j < size(right):
         add_last(sorted_list, right["elements"][j])
         j += 1
+
     return sorted_list
 
 
@@ -251,8 +252,5 @@ def merge_sort(my_list, sort_criteria=True, cmp_function=None):
         return my_list
     mid = size(my_list) // 2
     l_half = merge_sort(sub_list(my_list, 0, mid), sort_criteria, cmp_function)
-    r_half = merge_sort(sub_list(my_list, mid, size(my_list) - mid), sort_criteria, cmp_function)
+    r_half = merge_sort(sub_list(my_list, mid, size(my_list)), sort_criteria, cmp_function)
     return merge(l_half, r_half, sort_criteria, cmp_function)
-         
-    
-    

@@ -32,7 +32,7 @@ def new_logic():
 
 
 
-def load_data(catalog, filename=(data_dir+"Crime_in_LA_100.csv")):
+def load_data(catalog, filename=(data_dir+"Crime_in_LA_20.csv")):
     """
     Carga los datos del reto
     """
@@ -415,70 +415,88 @@ def req_6(catalog, n, sex, mes):
 
 def req_7(catalog, N, sex, age_min, age_max):
     """
-    Retorna el resultado del requerimiento 6
+    Determina los N crímenes más comunes para víctimas de un sexo específico en un rango de edad dado.
     """
-    # TODO: Modificar el requerimiento 6
-    
     start_time = get_time()
-    crime_type_map = mp.new_map(200,0.5)
-
-    crimes = catalog["crimes"]
-
-    for i in range(al.size(crimes)):
-        crime = crimes["elements"][i]
-
+    
+    # Usaremos un mapa para contar por código de crimen
+    crime_stats = {}
+    
+    # Recorrer todos los crímenes
+    crimes_list = catalog["crimes"]
+    size = al.size(crimes_list)
+    
+    for i in range(size):
+        crime = al.get_element(crimes_list, i)
+        
         try:
+            # Verificar campos necesarios
+            if (not crime["Vict Sex"] or not crime["Vict Age"] or 
+                not crime["Crm Cd"] or not crime["DATE OCC"]):
+                continue
+                
+            victim_sex = crime["Vict Sex"].upper()
             victim_age = int(crime["Vict Age"])
-            victim_sex = crime["Vict Sex"]
-        except (KeyError, ValueError):
+            crime_code = crime["Crm Cd"]
+            crime_year = crime["DATE OCC"].year
+            
+            # Filtrar por sexo y rango de edad
+            if victim_sex == sex.upper() and age_min <= victim_age <= age_max:
+                # Inicializar estructura si no existe
+                if crime_code not in crime_stats:
+                    crime_stats[crime_code] = {
+                        "code": crime_code,
+                        "total": 0,
+                        "ages": {},
+                        "years": {}
+                    }
+                
+                # Actualizar estadísticas
+                crime_stats[crime_code]["total"] += 1
+                
+                # Actualizar conteo por edad
+                if victim_age in crime_stats[crime_code]["ages"]:
+                    crime_stats[crime_code]["ages"][victim_age] += 1
+                else:
+                    crime_stats[crime_code]["ages"][victim_age] = 1
+                
+                # Actualizar conteo por año
+                if crime_year in crime_stats[crime_code]["years"]:
+                    crime_stats[crime_code]["years"][crime_year] += 1
+                else:
+                    crime_stats[crime_code]["years"][crime_year] = 1
+                    
+        except (ValueError, TypeError, AttributeError, KeyError):
             continue
-
-        if victim_sex == sex and age_min <= victim_age <= age_max:
-            crm_cd = crime["Crm Cd"]
-            year = crime["DATE OCC"].year
-
-            if not mp.contains(crime_type_map, crm_cd):
-                data = {
-                    "count": 0,
-                    "By Age": mp.new_map(50,0.5),
-                    "By Year": mp.new_map(20,0.5)
-                }
-                mp.put(crime_type_map, crm_cd, data)
-
-            entry = mp.get(crime_type_map, crm_cd)
-            entry["count"] += 1
-
-
-            if mp.contains(entry["By Age"], victim_age):
-                current = mp.get(entry["By Age"], victim_age)
-                mp.put(entry["By Age"], victim_age, current + 1)
-            else:
-                mp.put(entry["By Age"], victim_age, 1)
-
-            if mp.contains(entry["By Year"], year):
-                current = mp.get(entry["By Year"], year)
-                mp.put(entry["By Year"], year, current + 1)
-            else:
-                mp.put(entry["By Year"], year, 1)
-
-    crime_codes = mp.key_set(crime_type_map)
-    common_crimes = al.new_list()
-
-    for i in range(al.size(crime_codes)):
-        code = crime_codes["elements"][i]
-        entry = mp.get(crime_type_map, code)
-        al.add_last(common_crimes, (entry["count"], code, entry))
-    def compare_by_count_desc(a, b):
-        return b["count"] - a["count"]
-
-    sorted_crimes = al.merge_sort(common_crimes, compare_by_count_desc)
-
-    if al.size(sorted_crimes) > N:
-        sorted_crimes["elements"] = sorted_crimes["elements"][:N]
-        sorted_crimes["size"] = N
+    
+    # Convertir a lista
+    crime_list = al.new_list()
+    for code in crime_stats:
+        crime_data = crime_stats[code]
+        
+        # Convertir diccionarios a listas de tuplas
+        ages_list = [(age, count) for age, count in crime_data["ages"].items()]
+        years_list = [(year, count) for year, count in crime_data["years"].items()]
+        
+        al.add_last(crime_list, {
+            "code": crime_data["code"],
+            "total": crime_data["total"],
+            "ages": ages_list,
+            "years": years_list
+        })
+    
+    # Ordenar la lista por total de crímenes (descendente)
+    def compare_crimes(crime1, crime2):
+        return crime2["total"] - crime1["total"]
+    
+    sorted_crimes = al.merge_sort(crime_list, sort_criteria=False, cmp_function=compare_crimes)
+    
+    # Tomar los primeros N elementos
+    result_size = min(N, al.size(sorted_crimes))
+    result = al.sub_list(sorted_crimes, 0, result_size)
+    
     end_time = get_time()
-    delta_time = (end_time-start_time)
-    return sorted_crimes, delta_time
+    return result, delta_time(start_time, end_time)
 
 
 

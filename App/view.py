@@ -2,6 +2,7 @@ import sys
 import os
 from tabulate import tabulate
 import App.logic as log
+from DataStructures.List import array_list as al
 data_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'Data')
 default_name = os.path.join(data_dir, 'Crime_in_LA_100.csv')
 
@@ -215,49 +216,30 @@ def print_req_6(control):
 
 
 def print_req_7(control):
-    """
-        Función que imprime la solución del Requerimiento 7 en consola
-    """
-    # Solicitar parámetros al usuario
-    N = int(input("Ingrese el número de crímenes más comunes a mostrar: "))
-    sex = input("Ingrese el sexo de la víctima (M/F): ")
-    age_min = int(input("Ingrese la edad mínima del rango: "))
-    age_max = int(input("Ingrese la edad máxima del rango: "))
+    print("🔎 Requerimiento 7: Crímenes más comunes por sexo y rango de edad")
+    N = int(input("Ingrese la cantidad de crímenes más comunes a mostrar (N): "))
+    sex = input("Ingrese el sexo de la víctima (M/F): ").upper()
+    age_min = int(input("Edad mínima: "))
+    age_max = int(input("Edad máxima: "))
 
-    # Ejecutar la lógica
-    result = log.req_7(control, N, sex, age_min, age_max)
-    if result is None:
-        print(f"No se encontraron crímenes para sexo '{sex}' en rango {age_min}-{age_max}.")
-        return
+    result, elapsed = log.req_7(control, N, sex, age_min, age_max)
+    print(f"\n✅ Tiempo de ejecución: {elapsed:.3f} ms\n")
 
-    stats_list, elapsed_time = result
+    for i in range(al.size(result)):
+        crime = al.get_element(result, i)
+        print(f"🔸 Crimen #{i+1}")
+        print(f"  - Código: {crime['code']}")
+        print(f"  - Total crímenes: {crime['count']}")
 
-    # Preparar cabeceras para tabulate
-    headers = {
-        "Crm Cd": "Código Crimen",
-        "Total": "Total Crímenes",
-        "By Age": "Crímenes por Edad",
-        "By Year": "Crímenes por Año"
-    }
+        by_age = sorted(crime["By Age"].items(), key=lambda x: x[1], reverse=True)
+        by_year = sorted(crime["By Year"].items(), key=lambda x: x[1], reverse=True)
 
-    # Formatear cada entrada para presentación
-    display_rows = []
-    for stat in stats_list["elements"]:
-        # Convertir listas de tuplas a cadena legible
-        by_age_str = "; ".join(f"{count}@{age}" for count, age in stat["By Age"])
-        by_year_str = "; ".join(f"{count}@{year}" for count, year in stat["By Year"])
+        print("  - Crímenes por edad:")
+        print("    " + "; ".join([f"{count}@{age}" for age, count in by_age]))
 
-        display_rows.append({
-            "Crm Cd": stat["Crm Cd"],
-            "Total": stat["Total"],
-            "By Age": by_age_str,
-            "By Year": by_year_str
-        })
-
-    # Imprimir tabla
-    print(f"\nTop {len(display_rows)} crímenes más comunes para sexo '{sex}' y edades {age_min}-{age_max}:")
-    print(tabulate(display_rows, headers=headers, tablefmt="grid", stralign="center"))
-    print(f"\nLa acción tomó {elapsed_time} ms")
+        print("  - Crímenes por año:")
+        print("    " + "; ".join([f"{count}@{year}" for year, count in by_year]))
+        print("")
 
 
 def print_req_8(control):
